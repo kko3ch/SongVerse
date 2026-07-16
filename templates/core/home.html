@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block title %}SongVerse — Daily Music Challenge{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hero {
+    position: relative;
+    text-align: center;
+    padding: 4.5rem 1rem 2.5rem;
+    overflow: hidden;
+    border-radius: var(--radius);
+    margin-top: 1.5rem;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.25), transparent 40%),
+      radial-gradient(circle at 80% 30%, rgba(29, 185, 84, 0.25), transparent 40%);
+    z-index: -1;
+  }
+  .equalizer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 5px;
+    height: 40px;
+    margin-bottom: 1rem;
+  }
+  .equalizer span {
+    width: 5px;
+    background: linear-gradient(180deg, var(--accent), var(--purple));
+    border-radius: 3px;
+    animation: eq 1.2s ease-in-out infinite;
+  }
+  .equalizer span:nth-child(1) { height: 40%; animation-delay: 0s; }
+  .equalizer span:nth-child(2) { height: 70%; animation-delay: 0.15s; }
+  .equalizer span:nth-child(3) { height: 100%; animation-delay: 0.3s; }
+  .equalizer span:nth-child(4) { height: 60%; animation-delay: 0.45s; }
+  .equalizer span:nth-child(5) { height: 85%; animation-delay: 0.6s; }
+  .equalizer span:nth-child(6) { height: 50%; animation-delay: 0.75s; }
+  .equalizer span:nth-child(7) { height: 75%; animation-delay: 0.9s; }
+  @keyframes eq {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1); }
+  }
+  .hero .eyebrow {
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .hero .letter {
+    font-size: 6.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin: 0.4rem 0;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { filter: drop-shadow(0 0 12px var(--accent-glow)); }
+    50% { filter: drop-shadow(0 0 28px var(--accent-glow)); }
+  }
+  .hero .sub { color: var(--text-dim); margin-bottom: 1.5rem; font-size: 1.05rem; }
+  .hero .cta-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+  .ticker-wrap {
+    margin: 2rem 0 0.5rem;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    padding: 0.6rem 0;
+    position: relative;
+  }
+  .ticker-tag {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    display: flex; align-items: center;
+    background: var(--bg);
+    padding: 0 0.9rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    z-index: 2;
+  }
+  .ticker-track {
+    display: flex;
+    gap: 3rem;
+    white-space: nowrap;
+    animation: scrollTicker 40s linear infinite;
+    padding-left: 6rem;
+  }
+  .ticker-track span { font-size: 0.85rem; color: var(--text-dim); }
+  .ticker-track span b { color: var(--text); font-weight: 600; }
+  @keyframes scrollTicker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .section { margin: 3.25rem 0; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+  }
+  .section-head h2 { font-size: 1.2rem; margin: 0; }
+  .section-head span.tag { color: var(--text-dim); font-size: 0.8rem; }
+
+  .h-scroll {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scroll-snap-type: x mandatory;
+  }
+  .yt-card {
+    flex: 0 0 200px;
+    scroll-snap-align: start;
+    display: block;
+    position: relative;
+  }
+  .yt-card .thumb-wrap {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.6rem;
+  }
+  .yt-card img {
+    width: 200px;
+    height: 112px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.25s ease;
+  }
+  .yt-card:hover img { transform: scale(1.08); }
+  .yt-card .play-badge {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    font-size: 1.6rem;
+  }
+  .yt-card:hover .play-badge { opacity: 1; }
+  .yt-card .stat-badge {
+    position: absolute;
+    bottom: 6px; right: 6px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .yt-card .yt-title {
+    font-weight: 600;
+    font-size: 0.88rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .yt-card .yt-channel { color: var(--text-dim); font-size: 0.78rem; margin-top: 0.2rem; }
+  .new-badge {
+    display: inline-block;
+    background: var(--purple);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 0.3rem;
+  }
+
+  .leaderboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 640px) {
+    .leaderboard-grid { grid-template-columns: 1fr; }
+    .hero .letter { font-size: 4.5rem; }
+  }
+  .leaderboard-card h3 { margin: 0 0 0.9rem; font-size: 1rem; display: flex; align-items: center; gap: 0.4rem; }
+  .lb-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; background: var(--bg); border-radius: 6px; font-size: 0.75rem; color: var(--text-dim); margin-right: 0.5rem; }
+  .lb-count { color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+  .empty-state {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="equalizer">
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <p class="eyebrow">Today's Letter</p>
+  <div class="letter">{{ today_letter }}</div>
+  <p class="sub">Submit your favorite song starting with "{{ today_letter }}" before the clock runs out.</p>
+  <div class="cta-row">
+    <a href="{% url 'songs:submit' %}" class="btn">Submit a Song</a>
+    <a href="{% url 'challenge:today' %}" class="btn btn-outline">See Today's Challenge</a>
+  </div>
+</section>
+
+{% if trending_youtube %}
+<div class="ticker-wrap">
+  <span class="ticker-tag">🔴 LIVE</span>
+  <div class="ticker-track">
+    {% for video in trending_youtube %}
+      <span><b>{{ video.title|truncatechars:35 }}</b> — {{ video.channel }} · {{ video.views }} views</span>
+    {% endfor %}
+    {% for video in trending_youtube %}
+      <span><b>{{ video.title|truncatechars:35 }}</b> — {{ video.channel }} · {{ video.views }} views</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="section">
+  <div class="section-head">
+    <h2>🔥 Trending Now</h2>
+    <span class="tag">Live from YouTube</span>
+  </div>
+  {% if trending_youtube %}
+    <div class="h-scroll">
+      {% for video in trending_youtube %}
+      <a href="{{ video.url }}" target="_blank" class="yt-card">
+        <div class="thumb-wrap">
+          <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
+          <div class="play-badge">▶️</div>
+          <div class="stat-badge">{{ video.views }} views</div>
+        </div>
+        <div class="yt-title">{{ video.title }}</div>
+        <div class="yt-channel">{{ video.channel }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">Trending feed unavailable right now — check your YouTube API key.</div>
+  {% endif %}
+</div>
+
+<div class="section">
+  <div class="section-head">
+    <h2>🆕 Just Dropped</h2>
+    <span class="tag">Newest uploads</span>
+  </div>
+  {% if new_releases %}
+    <div class="h-scroll">
+      {% for video in new_releases %}
+      <a href="{{ video.url }}" target="_blank" class="yt-card">
+        <div class="thumb-wrap">
+          <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
+          <div class="play-badge">▶️</div>
+          {% if video.views %}<div class="stat-badge">{{ video.views }} views</div>{% endif %}
+        </div>
+        <span class="new-badge">NEW</span>
+        <div class="yt-title">{{ video.title }}</div>
+        <div class="yt-channel">{{ video.channel }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">New releases unavailable right now.</div>
+  {% endif %}
+</div>
+
+{% for row in genre_rows %}
+<div class="section">
+  <div class="section-head">
+    <h2>🎧 {{ row.label }}</h2>
+  </div>
+  <div class="h-scroll">
+    {% for video in row.videos %}
+    <a href="{{ video.url }}" target="_blank" class="yt-card">
+      <div class="thumb-wrap">
+        <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
+        <div class="play-badge">▶️</div>
+      </div>
+      <div class="yt-title">{{ video.title }}</div>
+      <div class="yt-channel">{{ video.channel }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+{% if kenya_trending or kenya_genre_rows %}
+<div class="section">
+  <div class="section-head">
+    <h2>🇰🇪 Kenya Trending</h2>
+    <span class="tag">Live from YouTube Kenya</span>
+  </div>
+  {% if kenya_trending %}
+    <div class="h-scroll">
+      {% for video in kenya_trending %}
+      <a href="{{ video.url }}" target="_blank" class="yt-card">
+        <div class="thumb-wrap">
+          <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
+          <div class="play-badge">▶️</div>
+          <div class="stat-badge">{{ video.views }} views</div>
+        </div>
+        <div class="yt-title">{{ video.title }}</div>
+        <div class="yt-channel">{{ video.channel }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">Kenya trending unavailable right now.</div>
+  {% endif %}
+</div>
+
+{% for row in kenya_genre_rows %}
+<div class="section">
+  <div class="section-head">
+    <h2>🎶 {{ row.label }}</h2>
+  </div>
+  <div class="h-scroll">
+    {% for video in row.videos %}
+    <a href="{{ video.url }}" target="_blank" class="yt-card">
+      <div class="thumb-wrap">
+        <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
+        <div class="play-badge">▶️</div>
+      </div>
+      <div class="yt-title">{{ video.title }}</div>
+      <div class="yt-channel">{{ video.channel }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="section">
+  <div class="section-head">
+    <h2>📈 Today's Challenge Leaderboard</h2>
+  </div>
+  <div class="leaderboard-grid">
+    <div class="card leaderboard-card">
+      <h3>🎯 Most Selected</h3>
+      {% for item in top_selected %}
+        <div class="lb-row">
+          <span><span class="lb-rank">{{ forloop.counter }}</span>{{ item.song__title }} — {{ item.song__artist__name }}</span>
+          <span class="lb-count">{{ item.pick_count }}x</span>
+        </div>
+      {% empty %}
+        <p style="color:var(--text-dim);font-size:0.9rem;">No picks yet — be the first!</p>
+      {% endfor %}
+    </div>
+    <div class="card leaderboard-card">
+      <h3>❤️ Most Voted</h3>
+      {% for submission in top_voted %}
+        <div class="lb-row">
+          <span><span class="lb-rank">{{ forloop.counter }}</span>{{ submission.song.title }} — {{ submission.song.artist }}</span>
+          <span class="lb-count">{{ submission.vote_total }}</span>
+        </div>
+      {% empty %}
+        <p style="color:var(--text-dim);font-size:0.9rem;">No votes yet — cast the first one!</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

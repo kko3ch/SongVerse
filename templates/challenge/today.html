@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Today's Challenge — SongVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 1rem 3rem;
+  }
+  .hero .eyebrow {
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .hero .letter {
+    font-size: 7rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin: 0.5rem 0;
+  }
+  .hero .sub { color: var(--text-dim); margin-bottom: 1.5rem; }
+  .countdown {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+  }
+  .cta-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+  .how-it-works {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 3rem 0;
+  }
+  .how-it-works .card h3 { margin: 0 0 0.4rem; font-size: 1rem; }
+  .how-it-works .card p { margin: 0; color: var(--text-dim); font-size: 0.9rem; }
+  .share-row { text-align: center; margin-top: 1rem; }
+  .share-row button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .share-row button:hover { border-color: var(--accent); color: var(--accent); }
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: all 0.25s ease;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .submissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .submission-card .song-title { font-weight: 600; font-size: 0.95rem; }
+  .submission-card .song-meta { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.6rem; }
+  .submission-card .song-comment { font-size: 0.85rem; color: var(--text-dim); font-style: italic; }
+  .submission-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; }
+  .vote-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .vote-btn:hover { border-color: var(--accent); }
+  .play-link { font-size: 0.8rem; color: var(--text-dim); }
+  .play-link:hover { color: var(--accent); }
+  .empty-state {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">TODAY'S LETTER</p>
+  <div class="letter">{{ challenge_day.letter }}</div>
+  <p class="sub">Submit your favorite song starting with "{{ challenge_day.letter }}" before the letter changes.</p>
+  <div class="countdown" id="countdown" data-seconds="{{ seconds_until_next_letter }}">
+    Next letter in --:--:--
+  </div>
+  <div class="cta-row">
+    <a href="{% url 'songs:submit' %}" class="btn">Get Started — Submit a Song</a>
+    <a href="{% url 'core:home' %}" class="btn btn-outline">Back to Home</a>
+  </div>
+  <div class="share-row">
+    <button id="shareBtn">Share today's challenge</button>
+  </div>
+</section>
+
+<div class="how-it-works">
+  <div class="card">
+    <h3>1. See the letter</h3>
+    <p>Every day at midnight, a new letter is revealed — A through Z, then it loops.</p>
+  </div>
+  <div class="card">
+    <h3>2. Submit a song</h3>
+    <p>Pick your favorite track that starts with today's letter and add it to the feed.</p>
+  </div>
+  <div class="card">
+    <h3>3. Vote & climb</h3>
+    <p>The community votes on submissions. Top picks hit the leaderboard.</p>
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="font-size:1.2rem;margin-bottom:1rem;">🎵 Today's Submissions ({{ submissions|length }})</h2>
+  {% if submissions %}
+    <div class="submissions-grid">
+      {% for submission in submissions %}
+      <div class="card submission-card">
+        <div class="song-title">{{ submission.song.title }}</div>
+        <div class="song-meta">{{ submission.song.artist }} · submitted by {{ submission.user.username }}</div>
+        {% if submission.comment %}<p class="song-comment">"{{ submission.comment }}"</p>{% endif %}
+        <div class="submission-footer">
+          <button class="vote-btn" data-submission-id="{{ submission.id }}">
+            ❤️ <span class="vote-count">{{ submission.vote_total }}</span>
+          </button>
+          {% if submission.song.youtube_url %}
+            <a href="{{ submission.song.youtube_url }}" target="_blank" class="play-link">▶️ Play</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">Nobody's submitted yet — be the first for letter {{ challenge_day.letter }}!</div>
+  {% endif %}
+</div>
+
+<div id="toast" class="toast">Link copied!</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Live countdown
+  (function () {
+    const el = document.getElementById("countdown");
+    let seconds = parseInt(el.dataset.seconds, 10);
+
+    function format(s) {
+      const h = String(Math.floor(s / 3600)).padStart(2, "0");
+      const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+      const sec = String(s % 60).padStart(2, "0");
+      return `${h}:${m}:${sec}`;
+    }
+
+    function tick() {
+      if (seconds <= 0) {
+        el.textContent = "New letter is live — refresh!";
+        return;
+      }
+      el.textContent = "Next letter in " + format(seconds);
+      seconds -= 1;
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  // Share button
+  document.getElementById("shareBtn").addEventListener("click", async () => {
+    const shareData = {
+      title: "SongVerse — Today's Challenge",
+      text: "Today's letter is {{ challenge_day.letter }}! Submit your favorite song on SongVerse.",
+      url: window.location.href,
+    };
+
+    const toast = document.getElementById("toast");
+    const showToast = (msg) => {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // user cancelled — no error needed
+      }
+    } else {
+      await navigator.clipboard.writeText(shareData.url);
+      showToast("Link copied!");
+    }
+  });
+
+  // AJAX voting
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  document.querySelectorAll(".vote-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.submissionId;
+      const res = await fetch(`/songs/vote/${id}/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": getCookie("csrftoken") },
+      });
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+      const data = await res.json();
+      btn.querySelector(".vote-count").textContent = data.vote_count;
+      btn.style.color = data.liked ? "var(--accent)" : "var(--text)";
+      btn.style.borderColor = data.liked ? "var(--accent)" : "var(--border)";
+    });
+  });
+</script>
+{% endblock %}

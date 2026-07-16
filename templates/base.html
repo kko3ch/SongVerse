@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SongVerse{% endblock %}</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'android-chrome-192x192.png' %}">
+  <style>
+    :root {
+      --bg: #0b0b0c;
+      --surface: #16161a;
+      --surface-hover: #1e1e23;
+      --border: #26262b;
+      --text: #f2f2f3;
+      --text-dim: #9a9aa3;
+      --accent: #1db954;
+      --accent-glow: rgba(29, 185, 84, 0.35);
+      --purple: #8b5cf6;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    a { color: inherit; text-decoration: none; }
+    main { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+    img { max-width: none; }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: rgba(11, 11, 12, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 4rem;
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #0b0b0c;
+      font-weight: 600;
+      padding: 0.65rem 1.4rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accent-glow); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--text-dim); transform: translateY(-2px); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: #35353c;
+      background: var(--surface-hover);
+    }
+
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% include "partials/navbar.html" %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/footer.html" %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

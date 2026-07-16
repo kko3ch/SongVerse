@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard — SongVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+  .lb-stage {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    padding: 3rem 1rem 2rem;
+    margin-top: 1rem;
+  }
+  .lb-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 10% 15%, rgba(139, 92, 246, 0.22), transparent 45%),
+      radial-gradient(circle at 90% 10%, rgba(29, 185, 84, 0.2), transparent 45%);
+    z-index: 0;
+  }
+
+  .clef {
+    position: absolute;
+    opacity: 0.1;
+    z-index: 0;
+    filter: drop-shadow(0 0 16px var(--accent-glow));
+    animation: drift ease-in-out infinite, spin linear infinite;
+  }
+  .clef svg { width: 100%; height: 100%; display: block; }
+  .clef.c1 { top: 8%;  left: 4%;  width: 70px; animation-duration: 16s, 45s; }
+  .clef.c2 { top: 65%; left: 88%; width: 60px; animation-duration: 20s, 50s; }
+  .clef.c3 { top: 5%;  left: 90%; width: 50px; animation-duration: 14s, 38s; }
+  @keyframes drift {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    50%      { transform: translateY(-18px) translateX(10px); }
+  }
+  @keyframes spin {
+    from { filter: drop-shadow(0 0 16px var(--accent-glow)) hue-rotate(0deg); }
+    to   { filter: drop-shadow(0 0 16px var(--accent-glow)) hue-rotate(360deg); }
+  }
+
+  .lb-header { position: relative; z-index: 1; text-align: center; padding-bottom: 1.5rem; }
+  .lb-header h1 {
+    font-size: 2.1rem;
+    margin-bottom: 0.3rem;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+  }
+  .lb-header p { color: var(--text-dim); font-size: 0.9rem; }
+
+  .period-tabs { position: relative; z-index: 1; display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2.5rem; }
+  .period-tabs a { padding: 0.45rem 1.2rem; border-radius: 999px; border: 1px solid var(--border); color: var(--text-dim); font-size: 0.85rem; font-weight: 600; transition: all 0.15s ease; }
+  .period-tabs a.active { background: var(--accent); border-color: var(--accent); color: #0b0b0c; box-shadow: 0 4px 16px var(--accent-glow); }
+  .period-tabs a:not(.active):hover { border-color: var(--text-dim); color: var(--text); transform: translateY(-1px); }
+
+  /* ---------- Podium ---------- */
+  .podium { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 1.1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+  .podium-spot {
+    text-align: center;
+    background: rgba(22, 22, 26, 0.65);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 1.4rem 1.1rem 1.1rem;
+    width: 180px;
+    animation: riseUp 0.55s ease both, floatSpot 5s ease-in-out infinite;
+  }
+  @keyframes riseUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes floatSpot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .podium-spot.first { order: 2; border-color: rgba(212,175,55,0.5); box-shadow: 0 0 40px rgba(212, 175, 55, 0.18); }
+  .podium-spot.second { order: 1; border-color: rgba(192,192,192,0.4); }
+  .podium-spot.third { order: 3; border-color: rgba(205,127,50,0.4); }
+  .podium-medal { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .podium-thumb-wrap { position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 0.7rem; }
+  .podium-thumb { width: 100%; height: 96px; object-fit: cover; display: block; }
+  .podium-thumb-fallback {
+    width: 100%; height: 96px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+  }
+  .podium-play-badge {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.35);
+    opacity: 0; transition: opacity 0.2s ease;
+    font-size: 1.4rem;
+  }
+  .podium-thumb-wrap:hover .podium-play-badge { opacity: 1; }
+  .podium-title { font-weight: 700; font-size: 0.9rem; line-height: 1.3; }
+  .podium-artist { color: var(--text-dim); font-size: 0.78rem; margin: 0.15rem 0 0.5rem; }
+  .podium-submitter {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.72rem; color: var(--text-dim);
+    background: rgba(255,255,255,0.04);
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+  }
+  .podium-votes { color: var(--accent); font-weight: 800; font-size: 0.95rem; }
+
+  /* ---------- Flat list ---------- */
+  .lb-list { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+  .lb-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .lb-item:hover { background: rgba(255,255,255,0.03); transform: translateX(2px); }
+  .lb-item + .lb-item { border-top: 1px solid var(--border); }
+  .lb-rank-num { width: 24px; text-align: center; color: var(--text-dim); font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+  .lb-thumb-wrap { position: relative; width: 48px; height: 48px; border-radius: 9px; overflow: hidden; flex-shrink: 0; }
+  .lb-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lb-thumb-fallback {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .lb-info { flex: 1; min-width: 0; }
+  .lb-title { font-weight: 600; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-meta { color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-right { text-align: right; flex-shrink: 0; }
+  .lb-votes { color: var(--accent); font-weight: 700; font-size: 0.9rem; }
+  .lb-play { font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 0.15rem; }
+  .lb-play:hover { color: var(--accent); }
+
+  .empty-state {
+    position: relative; z-index: 1;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 3rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lb-stage">
+  <div class="clef c1"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
+  <div class="clef c2"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--purple)"/></svg></div>
+  <div class="clef c3"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
+
+  <div class="lb-header">
+    <h1>🏆 Leaderboard</h1>
+    <p>The songs the community voted up the most.</p>
+  </div>
+
+  <div class="period-tabs">
+    <a href="?period=weekly" class="{% if active_period == 'weekly' %}active{% endif %}">Weekly</a>
+    <a href="?period=monthly" class="{% if active_period == 'monthly' %}active{% endif %}">Monthly</a>
+    <a href="?period=all" class="{% if active_period == 'all' %}active{% endif %}">All Time</a>
+  </div>
+
+  {% if ranked_submissions %}
+    {% if ranked_submissions|length >= 3 %}
+      <div class="podium">
+        {% for s in ranked_submissions|slice:":3" %}
+          <div class="podium-spot {% if forloop.counter == 1 %}first{% elif forloop.counter == 2 %}second{% else %}third{% endif %}">
+            <div class="podium-medal">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %}</div>
+            <div class="podium-thumb-wrap">
+              {% if s.song.thumbnail_url %}
+                <img class="podium-thumb" src="{{ s.song.thumbnail_url }}" alt="">
+              {% else %}
+                <div class="podium-thumb-fallback">🎵</div>
+              {% endif %}
+              {% if s.song.youtube_url %}
+                <a href="{{ s.song.youtube_url }}" target="_blank" class="podium-play-badge">▶️</a>
+              {% endif %}
+            </div>
+            <div class="podium-title">{{ s.song.title|truncatechars:28 }}</div>
+            <div class="podium-artist">{{ s.song.artist }}</div>
+            <div class="podium-submitter">👤 {{ s.user.username }}</div>
+            <div class="podium-votes">❤️ {{ s.vote_total }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      {% with rest=ranked_submissions|slice:"3:" %}
+        {% if rest %}
+          <div class="lb-list">
+            {% for s in rest %}
+              <div class="lb-item">
+                <span class="lb-rank-num">{{ forloop.counter|add:"3" }}</span>
+                <div class="lb-thumb-wrap">
+                  {% if s.song.thumbnail_url %}
+                    <img class="lb-thumb" src="{{ s.song.thumbnail_url }}" alt="">
+                  {% else %}
+                    <div class="lb-thumb-fallback">🎵</div>
+                  {% endif %}
+                </div>
+                <div class="lb-info">
+                  <div class="lb-title">{{ s.song.title }}</div>
+                  <div class="lb-meta">{{ s.song.artist }} · submitted by {{ s.user.username }}</div>
+                </div>
+                <div class="lb-right">
+                  <div class="lb-votes">❤️ {{ s.vote_total }}</div>
+                  {% if s.song.youtube_url %}<a href="{{ s.song.youtube_url }}" target="_blank" class="lb-play">▶️ Play</a>{% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    {% else %}
+      <!-- Fewer than 3 total entries: no podium, everything in the flat
+           list starting at rank 1 — this is the fix for the earlier bug
+           where a lone vote showed up nowhere. -->
+      <div class="lb-list">
+        {% for s in ranked_submissions %}
+          <div class="lb-item">
+            <span class="lb-rank-num">{{ forloop.counter }}</span>
+            <div class="lb-thumb-wrap">
+              {% if s.song.thumbnail_url %}
+                <img class="lb-thumb" src="{{ s.song.thumbnail_url }}" alt="">
+              {% else %}
+                <div class="lb-thumb-fallback">🎵</div>
+              {% endif %}
+            </div>
+            <div class="lb-info">
+              <div class="lb-title">{{ s.song.title }}</div>
+              <div class="lb-meta">{{ s.song.artist }} · submitted by {{ s.user.username }}</div>
+            </div>
+            <div class="lb-right">
+              <div class="lb-votes">❤️ {{ s.vote_total }}</div>
+              {% if s.song.youtube_url %}<a href="{{ s.song.youtube_url }}" target="_blank" class="lb-play">▶️ Play</a>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">No votes yet for this period — be the first to climb the board!</div>
+  {% endif %}
+</div>
+{% endblock %}

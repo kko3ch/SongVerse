@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.user.username }} — SongVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-header { text-align: center; padding: 3rem 1rem 2rem; }
+  .profile-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 700;
+    margin: 0 auto 1rem;
+  }
+  .profile-header h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
+  .profile-header p { color: var(--text-dim); font-size: 0.9rem; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .stat-card { text-align: center; }
+  .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+  .stat-label { color: var(--text-dim); font-size: 0.8rem; margin-top: 0.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+  <div class="profile-avatar">{{ profile.user.username|first|upper }}</div>
+  <h1>{{ profile.user.username }}</h1>
+  {% if profile.bio %}<p>{{ profile.bio }}</p>{% endif %}
+</div>
+
+<div class="stats-grid">
+  <div class="card stat-card">
+    <div class="stat-value">{{ profile.songs_submitted }}</div>
+    <div class="stat-label">Songs Submitted</div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-value">{{ profile.total_likes_received }}</div>
+    <div class="stat-label">Likes Received</div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-value">{{ profile.current_streak }}</div>
+    <div class="stat-label">Day Streak</div>
+  </div>
+</div>
+{% endblock %}

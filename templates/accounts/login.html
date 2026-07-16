@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Log In — SongVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-wrap {
+    max-width: 420px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .auth-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+  }
+  .auth-wrap h1 { font-size: 1.4rem; margin: 0 0 0.25rem; text-align: center; }
+  .auth-wrap .sub { color: var(--text-dim); margin-bottom: 2rem; font-size: 0.9rem; text-align: center; }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .field small.error { display: block; color: #ff6b6b; font-size: 0.8rem; margin-top: 0.3rem; }
+
+  .password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .password-wrap input { width: 100%; padding-right: 2.6rem; }
+  .toggle-password {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+  }
+  .toggle-password:hover { color: var(--text); }
+
+  .form-error {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .auth-footer { margin-top: 1.25rem; text-align: center; font-size: 0.85rem; color: var(--text-dim); }
+  .auth-footer a { color: var(--accent); font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-icon">🔑</div>
+  <h1>Welcome back</h1>
+  <p class="sub">Log in to submit songs and vote on today's challenge.</p>
+
+  {% if form.non_field_errors %}
+    <div class="form-error">{{ form.non_field_errors|join:", " }}</div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.field.widget.input_type == 'password' %}
+          <div class="password-wrap">
+            {{ field }}
+            <button type="button" class="toggle-password" data-target="{{ field.id_for_label }}">👁</button>
+          </div>
+        {% else %}
+          {{ field }}
+        {% endif %}
+        {% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn" style="width:100%;">Log In</button>
+  </form>
+  <div class="auth-footer">
+    New to SongVerse? <a href="{% url 'accounts:signup' %}">Sign up</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      btn.textContent = showing ? "👁" : "🙈";
+    });
+  });
+</script>
+{% endblock %}

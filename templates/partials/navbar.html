@@ -1,0 +1,60 @@
+<style>
+  .navbar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .brand { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; }
+  .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+  .nav-links a { color: var(--text-dim); font-weight: 500; font-size: 0.95rem; }
+  .nav-links a:hover { color: var(--text); }
+  .letter-pill {
+    width: 34px; height: 34px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+  .navbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+  .logout-form button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .logout-form button:hover { border-color: var(--text-dim); color: var(--text); }
+</style>
+
+<nav>
+  <div class="navbar-inner">
+    <a href="{% url 'core:home' %}" class="brand">🎵 SongVerse</a>
+    <div class="nav-links">
+      <a href="{% url 'core:home' %}">Home</a>
+      <a href="{% url 'challenge:today' %}">Today's Challenge</a>
+      <a href="{% url 'leaderboard:leaderboard' %}">Leaderboard</a>
+      <span class="letter-pill" title="Today's letter">{{ today_letter }}</span>
+    </div>
+    <div class="navbar-actions">
+      {% if user.is_authenticated %}
+        <a href="{% url 'songs:submit' %}" class="btn">Submit</a>
+        <a href="{% url 'accounts:profile' user.username %}">{{ user.username }}</a>
+        <form action="{% url 'accounts:logout' %}" method="post" class="logout-form">
+          {% csrf_token %}
+          <button type="submit">Logout</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Log in</a>
+        <a href="{% url 'accounts:signup' %}" class="btn">Sign up</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — SongVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-wrap {
+    max-width: 440px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .auth-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+  }
+  .auth-wrap h1 { font-size: 1.4rem; margin: 0 0 0.25rem; text-align: center; }
+  .auth-wrap .sub { color: var(--text-dim); margin-bottom: 2rem; font-size: 0.9rem; text-align: center; }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .field small.help { display: block; color: var(--text-dim); font-size: 0.75rem; margin-top: 0.3rem; }
+  .field small.error { display: block; color: #ff6b6b; font-size: 0.8rem; margin-top: 0.3rem; }
+
+  /* Wraps ONLY the input+button pair — this is what makes the eye
+     icon center correctly, since position:relative/50% now measures
+     against just the input's height, not the label above it too. */
+  .password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .password-wrap input { width: 100%; padding-right: 2.6rem; }
+  .toggle-password {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    align-items: center;
+  }
+  .toggle-password:hover { color: var(--text); }
+
+  .auth-footer { margin-top: 1.25rem; text-align: center; font-size: 0.85rem; color: var(--text-dim); }
+  .auth-footer a { color: var(--accent); font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-icon">🎵</div>
+  <h1>Create your account</h1>
+  <p class="sub">Join SongVerse and start submitting songs today.</p>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.field.widget.input_type == 'password' %}
+          <div class="password-wrap">
+            {{ field }}
+            <button type="button" class="toggle-password" data-target="{{ field.id_for_label }}">👁</button>
+          </div>
+        {% else %}
+          {{ field }}
+        {% endif %}
+        {% if field.help_text %}<small class="help">{{ field.help_text|safe }}</small>{% endif %}
+        {% if field.errors %}<small class="error">{{ field.errors|join:", " }}</small>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn" style="width:100%;">Sign Up</button>
+  </form>
+  <div class="auth-footer">
+    Already have an account? <a href="{% url 'accounts:login' %}">Log in</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      btn.textContent = showing ? "👁" : "🙈";
+    });
+  });
+</script>
+{% endblock %}

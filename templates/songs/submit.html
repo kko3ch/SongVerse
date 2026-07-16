@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% block title %}Submit a Song — SongVerse{% endblock %}
+
+{% block extra_css %}
+<style>
+  .surreal-stage {
+    position: relative;
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius);
+    margin-top: 1rem;
+  }
+  .surreal-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 25%, rgba(139, 92, 246, 0.3), transparent 45%),
+      radial-gradient(circle at 85% 20%, rgba(29, 185, 84, 0.25), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(139, 92, 246, 0.2), transparent 50%);
+    z-index: 0;
+  }
+
+  .clef {
+    position: absolute;
+    opacity: 0.14;
+    z-index: 0;
+    filter: drop-shadow(0 0 18px var(--accent-glow));
+    animation: drift ease-in-out infinite, spin linear infinite;
+  }
+  .clef svg { width: 100%; height: 100%; display: block; }
+  .clef.c1 { top: 6%;  left: 6%;  width: 90px;  animation-duration: 14s, 40s; }
+  .clef.c2 { top: 62%; left: 10%; width: 60px;  animation-duration: 18s, 55s; animation-delay: 1s, 0s; }
+  .clef.c3 { top: 12%; left: 82%; width: 110px; animation-duration: 16s, 60s; animation-delay: 2s, 3s; }
+  .clef.c4 { top: 70%; left: 78%; width: 70px;  animation-duration: 20s, 45s; }
+  .clef.c5 { top: 40%; left: 92%; width: 50px;  animation-duration: 12s, 35s; animation-delay: 0.5s, 1s; }
+  .clef.c6 { top: 85%; left: 45%; width: 65px;  animation-duration: 17s, 50s; }
+  .clef.c7 { top: 4%;  left: 45%; width: 40px;  animation-duration: 13s, 30s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    25%      { transform: translateY(-24px) translateX(14px); }
+    50%      { transform: translateY(10px) translateX(-16px); }
+    75%      { transform: translateY(-14px) translateX(-10px); }
+  }
+  @keyframes spin {
+    from { filter: drop-shadow(0 0 18px var(--accent-glow)) hue-rotate(0deg); }
+    to   { filter: drop-shadow(0 0 18px var(--accent-glow)) hue-rotate(360deg); }
+  }
+
+  .surreal-card {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 480px;
+    margin: 2rem;
+    padding: 2.5rem 2.25rem;
+    background: rgba(22, 22, 26, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(29, 185, 84, 0.08);
+    animation: floatCard 6s ease-in-out infinite;
+  }
+  @keyframes floatCard {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+
+  .surreal-eyebrow {
+    text-align: center;
+    color: var(--text-dim);
+    letter-spacing: 0.25em;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .surreal-letter {
+    text-align: center;
+    font-size: 3.2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin: 0.3rem 0 0.6rem;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .surreal-sub {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .field { margin-bottom: 1.1rem; position: relative; }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.03em;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: rgba(11, 11, 12, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field textarea { resize: vertical; }
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .field small.error { display: block; color: #ff6b6b; font-size: 0.8rem; margin-top: 0.3rem; }
+
+  .autocomplete-box { position: relative; }
+  .suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: rgba(22, 22, 26, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-top: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+  }
+  .suggestions.show { display: block; }
+  .suggestion-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .suggestion-item:hover { background: rgba(255,255,255,0.05); }
+  .suggestion-item img { width: 32px; height: 32px; border-radius: 5px; }
+  .suggestion-item .s-title { font-weight: 500; }
+  .suggestion-item .s-channel { color: var(--text-dim); font-size: 0.75rem; }
+
+  .artist-confirmed {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(29, 185, 84, 0.12);
+    color: var(--accent);
+    font-size: 0.78rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    margin-top: 0.5rem;
+  }
+
+  /* ---------- Star rating ---------- */
+  .rating-field { text-align: center; }
+  .rating-field > label {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+  .star-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 0.6rem;
+  }
+  .star {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .star svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.15s ease;
+  }
+  .star .star-empty path { fill: none; stroke: var(--border); stroke-width: 1.5; }
+  .star .star-fill {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    width: 0%;
+    transition: width 0.12s ease;
+  }
+  .star .star-fill svg { position: absolute; top: 0; left: 0; width: 48px; height: 48px; }
+  .star .star-fill path { fill: var(--accent); filter: drop-shadow(0 0 6px var(--accent-glow)); }
+  .star:hover svg.star-empty { transform: scale(1.08); }
+  .star.pop svg.star-empty { animation: starPop 0.35s ease; }
+  @keyframes starPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35) rotate(-8deg); }
+    70%  { transform: scale(0.92) rotate(4deg); }
+    100% { transform: scale(1); }
+  }
+
+  .rating-readout {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    min-height: 2rem;
+  }
+  .rating-hint { color: var(--text-dim); font-size: 0.75rem; margin-top: 0.2rem; }
+  .rating-error { color: #ff6b6b; font-size: 0.8rem; margin-top: 0.4rem; }
+
+  .surreal-submit {
+    width: 100%;
+    margin-top: 0.75rem;
+    font-size: 1rem;
+    padding: 0.8rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="surreal-stage">
+  <div class="clef c1"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
+  <div class="clef c2"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--purple)"/></svg></div>
+  <div class="clef c3"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
+  <div class="clef c4"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--purple)"/></svg></div>
+  <div class="clef c5"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
+  <div class="clef c6"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--purple)"/></svg></div>
+  <div class="clef c7"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
+
+  <div class="surreal-card">
+    <p class="surreal-eyebrow">Submit for letter</p>
+    <div class="surreal-letter">{{ today_letter }}</div>
+    <p class="surreal-sub">Type your song, rate it honestly, say why (or don't).</p>
+
+    <form method="post" id="submitForm">
+      {% csrf_token %}
+      {{ form.artist_name }}
+      {{ form.thumbnail_url }}
+      {{ form.youtube_url }}
+      {{ form.rating }}
+
+      <div class="field autocomplete-box">
+        <label for="{{ form.your_song.id_for_label }}">{{ form.your_song.label }}</label>
+        {{ form.your_song }}
+        <div class="suggestions" id="suggestionsBox"></div>
+        {% if form.your_song.errors %}<small class="error">{{ form.your_song.errors|join:", " }}</small>{% endif %}
+        <div class="artist-confirmed" id="artistConfirmed" style="display:none;">
+          🎤 <span id="artistConfirmedName"></span>
+        </div>
+      </div>
+
+      <div class="field rating-field">
+        <label>Rate today's pick</label>
+        <div class="star-row" id="starRow">
+          {% for i in "12345" %}
+          <div class="star" data-star-index="{{ i }}">
+            <svg class="star-empty" viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.5.6-5.7 5 1.7 7.4L12 18.3 5.6 21.9l1.7-7.4-5.7-5 7.5-.6z"/></svg>
+            <div class="star-fill">
+              <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.9 7.5.6-5.7 5 1.7 7.4L12 18.3 5.6 21.9l1.7-7.4-5.7-5 7.5-.6z"/></svg>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="rating-readout" id="ratingReadout">–</div>
+        <div class="rating-hint">Click left half of a star for X.0, right half for X.5</div>
+        {% if form.rating.errors %}<div class="rating-error">{{ form.rating.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+        {{ form.comment }}
+      </div>
+
+      <button type="submit" class="btn surreal-submit">Submit Song</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ---------- Autocomplete ----------
+  (function () {
+    const songInput = document.querySelector("#id_your_song");
+    const artistHidden = document.querySelector("#id_artist_name");
+    const thumbnailHidden = document.querySelector("#id_thumbnail_url");
+    const youtubeHidden = document.querySelector("#id_youtube_url");
+    const box = document.getElementById("suggestionsBox");
+    const confirmedBadge = document.getElementById("artistConfirmed");
+    const confirmedName = document.getElementById("artistConfirmedName");
+    if (!songInput || !box) return;
+
+    let debounceTimer;
+    songInput.addEventListener("input", () => {
+      artistHidden.value = "";
+      thumbnailHidden.value = "";
+      youtubeHidden.value = "";
+      confirmedBadge.style.display = "none";
+
+      clearTimeout(debounceTimer);
+      const query = songInput.value.trim();
+      if (query.length < 2) { box.classList.remove("show"); return; }
+
+      debounceTimer = setTimeout(async () => {
+        const res = await fetch(`/songs/autocomplete/?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSuggestions(data.results);
+      }, 300);
+    });
+
+    function renderSuggestions(results) {
+      box.innerHTML = "";
+      if (!results.length) { box.classList.remove("show"); return; }
+      results.forEach((r) => {
+        const item = document.createElement("div");
+        item.className = "suggestion-item";
+        item.innerHTML = `<img src="${r.thumbnail}"><div><div class="s-title">${r.title}</div><div class="s-channel">${r.channel}</div></div>`;
+        item.addEventListener("click", () => {
+          songInput.value = r.title;
+          artistHidden.value = r.channel;
+          thumbnailHidden.value = r.thumbnail;
+          youtubeHidden.value = r.url;
+          confirmedName.textContent = r.channel;
+          confirmedBadge.style.display = "inline-flex";
+          box.classList.remove("show");
+        });
+        box.appendChild(item);
+      });
+      box.classList.add("show");
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!songInput.parentElement.contains(e.target)) box.classList.remove("show");
+    });
+  })();
+
+  // ---------- Half-star rating widget ----------
+  (function () {
+    const stars = Array.from(document.querySelectorAll(".star"));
+    const hiddenInput = document.querySelector("#id_rating");
+    const readout = document.getElementById("ratingReadout");
+    let committedValue = 0;
+    let previewValue = 0;
+
+    function paint(value) {
+      stars.forEach((starEl) => {
+        const index = parseInt(starEl.dataset.starIndex, 10);
+        const fillEl = starEl.querySelector(".star-fill");
+        const portion = Math.max(0, Math.min(1, value - (index - 1)));
+        fillEl.style.width = (portion * 100) + "%";
+      });
+    }
+
+    function valueFromEvent(starEl, clientX) {
+      const rect = starEl.getBoundingClientRect();
+      const index = parseInt(starEl.dataset.starIndex, 10);
+      const isRightHalf = (clientX - rect.left) > rect.width / 2;
+      return index - (isRightHalf ? 0 : 0.5);
+    }
+
+    function setReadout(value) {
+      readout.textContent = value > 0 ? value.toFixed(1) + " ★" : "–";
+    }
+
+    stars.forEach((starEl) => {
+      starEl.addEventListener("mousemove", (e) => {
+        previewValue = valueFromEvent(starEl, e.clientX);
+        paint(previewValue);
+        setReadout(previewValue);
+      });
+
+      starEl.addEventListener("mouseleave", () => {
+        paint(committedValue);
+        setReadout(committedValue);
+      });
+
+      starEl.addEventListener("click", (e) => {
+        committedValue = valueFromEvent(starEl, e.clientX);
+        hiddenInput.value = committedValue.toFixed(1);
+        paint(committedValue);
+        setReadout(committedValue);
+
+        starEl.classList.remove("pop");
+        void starEl.offsetWidth;
+        starEl.classList.add("pop");
+      });
+
+      starEl.addEventListener("touchstart", (e) => {
+        const touch = e.touches[0];
+        committedValue = valueFromEvent(starEl, touch.clientX);
+        hiddenInput.value = committedValue.toFixed(1);
+        paint(committedValue);
+        setReadout(committedValue);
+      }, { passive: true });
+    });
+
+    document.getElementById("submitForm").addEventListener("submit", (e) => {
+      if (!hiddenInput.value) {
+        e.preventDefault();
+        readout.textContent = "Pick a rating first!";
+        readout.style.color = "#ff6b6b";
+      }
+    });
+  })();
+</script>
+{% endblock %}
