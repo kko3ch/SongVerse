@@ -161,7 +161,6 @@
     margin-top: 0.5rem;
   }
 
-  /* ---------- Star rating ---------- */
   .rating-field { text-align: center; }
   .rating-field > label {
     text-align: center;
@@ -226,6 +225,73 @@
     font-size: 1rem;
     padding: 0.8rem;
   }
+
+  /* ---------- Already-submitted state ---------- */
+  .already-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 1.25rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+  }
+  .already-title {
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+  .already-sub {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 1.75rem;
+  }
+  .already-song-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: rgba(11, 11, 12, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .already-thumb {
+    width: 52px; height: 52px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .already-thumb-fallback {
+    width: 52px; height: 52px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .already-song-title { font-weight: 600; font-size: 0.95rem; }
+  .already-song-artist { color: var(--text-dim); font-size: 0.82rem; }
+  .already-song-rating { color: var(--accent); font-size: 0.82rem; margin-top: 0.15rem; }
+
+  .already-countdown-label {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .already-countdown {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    margin-bottom: 1.75rem;
+  }
 </style>
 {% endblock %}
 
@@ -239,6 +305,31 @@
   <div class="clef c6"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--purple)"/></svg></div>
   <div class="clef c7"><svg viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg"><path d="M52 4c-14 0-22 12-22 24 0 10 5 18 13 27-9 12-18 24-18 40 0 18 14 32 30 32 17 0 30-13 30-30 0-14-10-24-22-29v-38c8 3 13 10 13 18 0 4-1 7-3 10l7 5c3-5 5-10 5-16 0-14-10-24-22-27V16c0-7-5-12-11-12zm-1 14c3 0 5 2 5 5v13c-6-3-10-8-10-14 0-2 2-4 5-4zm1 55v40c-9-3-15-11-15-20 0-9 6-16 15-20zm4 8c8 4 13 11 13 19 0 10-8 18-18 18-9 0-16-6-18-15 3 1 6 2 9 2 8 0 14-11 14-24z" fill="var(--accent)"/></svg></div>
 
+  {% if already_submitted %}
+  <div class="surreal-card">
+    <div class="already-icon">✅</div>
+    <div class="already-title">You're set for letter "{{ challenge_day.letter }}"</div>
+    <p class="already-sub">One submission per letter — here's what you sent in:</p>
+
+    <div class="already-song-card">
+      {% if existing_submission.song.thumbnail_url %}
+        <img class="already-thumb" src="{{ existing_submission.song.thumbnail_url }}" alt="">
+      {% else %}
+        <div class="already-thumb-fallback">🎵</div>
+      {% endif %}
+      <div>
+        <div class="already-song-title">{{ existing_submission.song.title }}</div>
+        <div class="already-song-artist">{{ existing_submission.song.artist }}</div>
+        <div class="already-song-rating">{{ existing_submission.rating }} ★ rated</div>
+      </div>
+    </div>
+
+    <p class="already-countdown-label">Next letter in</p>
+    <div class="already-countdown" id="alreadyCountdown" data-seconds="{{ seconds_until_next_letter }}">--:--:--</div>
+
+    <a href="{% url 'challenge:today' %}" class="btn surreal-submit" style="text-align:center; display:block;">See Today's Submissions</a>
+  </div>
+  {% else %}
   <div class="surreal-card">
     <p class="surreal-eyebrow">Submit for letter</p>
     <div class="surreal-letter">{{ today_letter }}</div>
@@ -286,12 +377,40 @@
       <button type="submit" class="btn surreal-submit">Submit Song</button>
     </form>
   </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
+{% if already_submitted %}
 <script>
-  // ---------- Autocomplete ----------
+  (function () {
+    const el = document.getElementById("alreadyCountdown");
+    if (!el) return;
+    let seconds = parseInt(el.dataset.seconds, 10);
+
+    function format(s) {
+      const h = String(Math.floor(s / 3600)).padStart(2, "0");
+      const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+      const sec = String(s % 60).padStart(2, "0");
+      return `${h}:${m}:${sec}`;
+    }
+
+    function tick() {
+      if (seconds <= 0) {
+        el.textContent = "New letter is live — refresh!";
+        return;
+      }
+      el.textContent = format(seconds);
+      seconds -= 1;
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+{% else %}
+<script>
   (function () {
     const songInput = document.querySelector("#id_your_song");
     const artistHidden = document.querySelector("#id_artist_name");
@@ -346,7 +465,6 @@
     });
   })();
 
-  // ---------- Half-star rating widget ----------
   (function () {
     const stars = Array.from(document.querySelectorAll(".star"));
     const hiddenInput = document.querySelector("#id_rating");
@@ -415,4 +533,5 @@
     });
   })();
 </script>
+{% endif %}
 {% endblock %}
